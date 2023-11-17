@@ -1,4 +1,5 @@
 package org.example;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -6,13 +7,12 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import java.util.Date;
 import java.util.List;
 
 public class ReminderBot extends TelegramLongPollingBot {
-    private String botUsername;
-    private String botToken;
-    private ReminderManager reminderManager;
+    private final String botUsername;
+    private final String botToken;
+    private final ReminderManager reminderManager;
 
     public ReminderBot(String botUsername, String botToken) {
         this.botUsername = botUsername;
@@ -37,7 +37,7 @@ public class ReminderBot extends TelegramLongPollingBot {
 
                     String dateTimeInput = dateInput + " " + timeInput;
 
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("DD MM YYYY hh:mm");
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd MM yyyy HH:mm");
                     try {
                         Date dueDate = dateFormat.parse(dateTimeInput);
 
@@ -62,9 +62,9 @@ public class ReminderBot extends TelegramLongPollingBot {
     }
 
     private void sendTextMessage(long chatId, String text) {
-        SendMessage message = new SendMessage()
-                .setChatId(chatId)
-                .setText(text);
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setText(text);
 
         try {
             execute(message);
