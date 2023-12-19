@@ -6,10 +6,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ReminderManager {
-    private List<Reminder> reminders;
 
-    public ReminderManager() {
+    private List<Reminder> reminders;
+    private final HandlerBot HandlerBot;
+    public ReminderManager(HandlerBot HandlerBot) {
         this.reminders = new ArrayList<>();
+        this.HandlerBot = HandlerBot;
         startReminderScheduler();
     }
 
@@ -33,17 +35,15 @@ public class ReminderManager {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                // Check and send reminders
                 Date now = new Date();
                 for (Reminder reminder : reminders) {
                     if (now.after(reminder.getDueDate())) {
-                        //send reminder to user
-                        System.out.println("Reminder for user " + reminder.getUserId() + ": " + reminder.getMessage());
-                        //implement sending a message to the user via tg API here
-                        reminders.remove(reminder); // remove the reminder after sending
+                        long userId = reminder.getUserId();
+                        HandlerBot.sendTextMessage(userId, "НАПОМИНАНИЕ: \n" + reminder.getMessage());
+                        reminders.remove(reminder);
                     }
                 }
             }
-        }, 0, 1000); // check every second adjust as needed
+        }, 0, 1000);
     }
 }
