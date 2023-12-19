@@ -7,18 +7,15 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
 import java.util.List;
 
 public class ReminderBot extends TelegramLongPollingBot {
-    private final String botUsername;
-    private final String botToken;
-    private final ReminderManager reminderManager;
+    private final String botUsername = "@very_cool_ReminderBot";
+    private final String botToken = "6799379167:AAFERe3GjtIYBLczcib9FQlHe0fQV-n8tiI";
+    private final ReminderManager reminderManager = new ReminderManager(new HandlerBot(this));
 
-    public ReminderBot(String botUsername, String botToken) {
-        this.botUsername = botUsername;
-        this.botToken = botToken;
-        this.reminderManager = new ReminderManager();
-    }
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
@@ -26,9 +23,14 @@ public class ReminderBot extends TelegramLongPollingBot {
             long chatId = message.getChatId();
             long userId = message.getFrom().getId();
             String text = message.getText();
+            if (text.equals("/start")){
+                sendMessage(
+                        chatId,
+                        "Привет!\nЯ помогу тебе ничего не забыть, просто создай напоминание с помощью:\n/remind <сообщение> <дата формата 01.01.2023> <время формата 00:00>"
+                );
 
-            if (text.startsWith("/remind")) {
-                // Parse the command and add a reminder
+            }
+            else if (text.startsWith("/remind")) {
                 String[] commandParts = text.split(" ");
                 if (commandParts.length == 4) {
                     String reminderMessage = commandParts[1];
@@ -37,38 +39,48 @@ public class ReminderBot extends TelegramLongPollingBot {
 
                     String dateTimeInput = dateInput + " " + timeInput;
 
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd MM yyyy HH:mm");
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
                     try {
                         Date dueDate = dateFormat.parse(dateTimeInput);
 
                         reminderManager.addReminder(userId, reminderMessage, dueDate);
-                        sendTextMessage(chatId, "напоминалка готова!");
+                        sendMessage(
+                                chatId,
+                                "Напоминалка готова!"
+                        );
                     } catch (ParseException e) {
-                        sendTextMessage(chatId, "неверный форматы даты и времени. попробуй: /remind <сообщение> <дата формата 01 01 2023> <время формата 00:00>");
+                        sendMessage(
+                                chatId,
+                                "Неверный форматы даты и времени. попробуй: /remind <сообщение> <дата формата 01.01.2023> <время формата 00:00>"
+                        );
                     }
-                } else {
-                    sendTextMessage(chatId, "неверная команда. попробуй: /remind <сообщение> <дата формата 01 01 2023> <время формата 00:00>");
                 }
-            } else if (text.equals("/myreminders")) {
-                // Get and send user's reminders
+                else {
+                    sendMessage(
+                            chatId,
+                            "Неверная команда. попробуй: /remind <сообщение> <дата формата 01.01.2023> <время формата 00:00>"
+                    );
+                }
+            }
+            else if (text.equals("/myreminders")) {
                 List<Reminder> userReminders = reminderManager.getRemindersByUserId(userId);
-                StringBuilder reminderText = new StringBuilder("существующие напоминалки:\n");
+                StringBuilder reminderText = new StringBuilder("Существующие напоминалки:\n");
                 for (Reminder reminder : userReminders) {
                     reminderText.append(reminder.getMessage()).append(" - ").append(reminder.getDueDate()).append("\n");
                 }
-                sendTextMessage(chatId, reminderText.toString());
+                sendMessage(chatId, reminderText.toString());
             }
         }
     }
 
-    private void sendTextMessage(long chatId, String text) {
+    public void sendMessage(long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText(text);
 
         try {
-            execute(message);
-        } catch (Exception e) {
+            executeAsync(message);
+        } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
